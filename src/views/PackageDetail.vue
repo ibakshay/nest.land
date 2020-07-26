@@ -134,6 +134,7 @@
   import { HTTP } from "../http-common";
   import moment from "moment";
   import * as semverSort from "semver/functions/sort";
+  import * as semverValid from "semver/functions/valid";
   import VueMarkdown from "vue-markdown";
   import FileExplorer from "../components/package/FileExplorer";
   import axios from 'axios'
@@ -173,7 +174,7 @@
       if (this.v === "" || !this.v || this.v === null) {
         this.selectedVersion = this.packageInfo.latestStableVersion;
         if (this.selectedVersion === null)
-          this.selectedVersion = this.packageInfo.latestVersion;
+          this.selectedVersion = this.packageVersions[this.packageVersions.length - 1];
       } else {
         if (!this.packageInfo.packageUploadNames.includes(this.v)) {
           this.$router.push("/404");
@@ -225,9 +226,19 @@
             return;
           }
           this.packageInfo = packageDataResponse.data.body;
+          let corruptVersions;
           this.packageVersions = this.sortPackages(
             this.packageInfo.packageUploadNames,
           );
+          for (let i = 0; i < this.packageVersions.length; i++) {
+            console.log(semverValid(this.packageVersions[i]));
+            if (semverValid(this.packageVersions[i]) === false) {
+              corruptVersions.push(this.packageVersions[i]);
+              this.packageVersions.splice(i, 1);
+            }
+          }
+          if (corruptVersions.length > 0)
+            this.packageVersions.concat(corruptVersions).reverse();
         } catch (err) {
           this.$emit("new-error", err);
         }
