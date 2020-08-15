@@ -141,9 +141,15 @@
                   <font-awesome-icon class="icon-margin-right" :icon="['fa', 'code-branch']" />
                   Git
                 </p>
+                <a class="panel-block" :href="packageInfo.repository">
+                  <font-awesome-icon class="icon-margin-right" :icon="['fab', 'github']" v-if="packageInfo.repository.includes('github.com')" />
+                  <font-awesome-icon class="icon-margin-right" :icon="['fab', 'bitbucket']" v-else-if="packageInfo.repository.includes('bitbucket.org')" />
+                  <font-awesome-icon class="icon-margin-right" :icon="['fab', 'gitlab']" v-else-if="packageInfo.repository.includes('gitlab.com')" />
+                  {{ packageInfo.repository | gitRepo }}
+                </a>
                 <div class="panel-block">
-                  <img :src="gitInfo.profilePicture" alt="git profile picture">
-                  {{ packageInfo.repository | gitUsername }}
+                  <font-awesome-icon class="icon-margin-right" :icon="['fa', 'star']" />
+                  {{ gitStars }}
                 </div>
               </nav>
               <nav class="panel">
@@ -200,7 +206,7 @@ export default {
       entryFile: "/mod.ts",
       malicious: false,
       copied: false,
-      gitInfo: { stars: 0, profilePicture: '' }
+      gitStars: 0
     };
   },
   props: {
@@ -213,7 +219,7 @@ export default {
       if (!createdAt) return "";
       return moment(String(createdAt)).format("LL");
     },
-    gitUsername (val) {
+    gitRepo (val) {
       if(val === undefined) return "";
       return val.replace(/^[a-zA-Z]{3,5}\:\/{2}[a-zA-Z0-9_.:-]+\//, "");
     }
@@ -281,6 +287,7 @@ export default {
         this.packageVersions = this.sortPackages(
           this.packageInfo.packageUploadNames
         );
+        await this.setStarCount();
       } catch (err) {
         this.$emit("new-error", err);
       }
@@ -339,6 +346,20 @@ export default {
         this.copied = true;
       });
     },
+    async setStarCount() {
+      if(this.packageInfo.repository === undefined) return;
+      if(this.packageInfo.repository.includes('github.com')) {
+        await axios
+          .get(`https://api.github.com/repos/${ this.packageInfo.repository.replace(/^[a-zA-Z]{3,5}\:\/{2}[a-zA-Z0-9_.:-]+\//, "") }`)
+          .then(res => {
+            this.gitStars = res.data.stargazers_count
+          })
+      }else if (this.packageInfo.repository.includes('gitlab.com')) {
+
+      }else if (this.packageInfo.repository.includes('bitbucket.org')) {
+
+      }
+    }
   },
 };
 </script>
