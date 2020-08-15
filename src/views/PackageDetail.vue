@@ -118,16 +118,6 @@
                   <font-awesome-icon class="icon-margin-right" :icon="['fa', 'user']" />
                   {{ packageInfo.owner }}
                 </div>
-                <a
-                  v-if="
-                    packageInfo.repository !== '' &&
-                    packageInfo.repository !== null
-                  "
-                  class="panel-block"
-                  :href="packageInfo.repository"
-                >
-                  <font-awesome-icon class="icon-margin-right" :icon="['fa', 'code-branch']" />Repository
-                </a>
                 <router-link
                   v-if="!noVersion"
                   class="panel-block"
@@ -138,6 +128,22 @@
                 <div class="panel-block">
                   <font-awesome-icon class="icon-margin-right" :icon="['fa', 'calendar-alt']" />
                   Published on: {{ packageInfo.createdAt | formatDate }}
+                </div>
+              </nav>
+              <nav 
+                class="panel"
+                v-if="
+                    packageInfo.repository !== '' &&
+                    packageInfo.repository !== null
+                  "                
+                >
+                <p class="panel-heading">
+                  <font-awesome-icon class="icon-margin-right" :icon="['fa', 'code-branch']" />
+                  Git
+                </p>
+                <div class="panel-block">
+                  <img :src="gitInfo.profilePicture" alt="git profile picture">
+                  {{ packageInfo.repository | gitUsername }}
                 </div>
               </nav>
               <nav class="panel">
@@ -194,6 +200,7 @@ export default {
       entryFile: "/mod.ts",
       malicious: false,
       copied: false,
+      gitInfo: { stars: 0, profilePicture: '' }
     };
   },
   props: {
@@ -202,10 +209,14 @@ export default {
     },
   },
   filters: {
-    formatDate: function (createdAt) {
+    formatDate (createdAt) {
       if (!createdAt) return "";
       return moment(String(createdAt)).format("LL");
     },
+    gitUsername (val) {
+      if(val === undefined) return "";
+      return val.replace(/^[a-zA-Z]{3,5}\:\/{2}[a-zA-Z0-9_.:-]+\//, "");
+    }
   },
   async created() {
     await this.refreshContent();
